@@ -182,5 +182,46 @@ namespace YBLoader.CoreLib
         }
 
         #endregion
+
+
+        /// <summary>
+        /// 全ての記事一覧のページから記事の ID を取得します。
+        /// </summary>
+        /// <param name="blogInfo"></param>
+        /// <param name="pageNum"></param>
+        /// <returns></returns>
+        public async Task<YBlogArticleIdCollection> GetArticleIdsAsync(YBlogInfo blogInfo, int pageNum)
+        {
+            var result = new YBlogArticleIdCollection();
+            var url = UrlUtils.BlogIdToAllArticlesPageUrl(blogInfo, pageNum);
+
+            using (var httpResponse = await this._httpClient.GetAsync(url))
+            using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
+            using (var sr = new StreamReader(httpStream, Encoding.GetEncoding("euc-jp")))
+            {
+                // 記事 ID
+                // <div class="clearFix entryTitle myblog" data-title="2019年07月11日 本日の乗車記録" data-articleId="16558706" >
+                var idKeyword = "<div class=\"clearFix entryTitle";
+                while (!sr.EndOfStream)
+                {
+                    var line = sr.ReadLine();
+                    if (!line.Contains(idKeyword))
+                        continue;
+
+                    var id = line.Replace("data-articleId=\"", "\n").Split('\n')[1]
+                        .Replace("\"", "\n").Split('\n')[0];
+
+                    result.Add(new YBlogArticleIdInfo()
+                    {
+                        Id = line.Replace("data-articleId=\"", "\n").Split('\n')[1].Replace("\"", "\n").Split('\n')[0],
+                        Subject = line.Replace("data-title=\"", "\n").Split('\n')[1].Replace("\" data", "\n").Split('\n')[0],
+                    });
+                }
+            }
+
+            return result;
+        }
+
+
     }
 }

@@ -26,7 +26,15 @@ namespace YBLoader.Tests
             Console.WriteLine("Est={0}", blogInfo.EstablishmentAt);
 
             Console.WriteLine();
-            var articleInfo = Task.Run(() => loader.GetArticleMetaInfoAsync(blogInfo, "16558709")).Result;
+            var recentlyArticles = Task.Run(() => loader.GetArticleIdsAsync(blogInfo, 1)).Result;
+
+            foreach (var id in recentlyArticles)
+            {
+                Console.WriteLine("* {0}: {1}", id.Id, id.Subject);
+            }
+
+            Console.WriteLine();
+            var articleInfo = Task.Run(() => loader.GetArticleMetaInfoAsync(blogInfo, recentlyArticles.First().Id)).Result;
 
             Console.WriteLine("Id={0}", articleInfo.Id);
             Console.WriteLine("Subject={0}", articleInfo.Subject);

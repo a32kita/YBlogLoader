@@ -19,5 +19,10 @@ namespace YBLoader.CoreLib.InternalUtils
         {
             return $"{blogInfo.BaseUrl}/{articleId}.html";
         }
+
+        public static string BlogIdToAllArticlesPageUrl(YBlogInfo blogInfo, int pageNum)
+        {
+            return $"{blogInfo.BaseUrl}/MYBLOG/yblog.html?m=lc&p={pageNum.ToString()}";
+        }
     }
 }

@@ -4,16 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7324075B-F1D1-4732-87D9-79FECA447B1C}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>YBLoader.CoreLib</RootNamespace>
-    <AssemblyName>YBLoader.CoreLib</AssemblyName>
+    <ProjectGuid>{611FDCBE-4CD3-464C-805F-73F850E04D3E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SimpleDownloader</RootNamespace>
+    <AssemblyName>SimpleDownloader</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -41,14 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InternalUtils\UrlUtils.cs" />
-    <Compile Include="Models\YBlogArticleDocument.cs" />
-    <Compile Include="Models\YBlogArticleIdCollection.cs" />
-    <Compile Include="Models\YBlogArticleIdInfo.cs" />
-    <Compile Include="Models\YBlogArticleMetaInfo.cs" />
-    <Compile Include="Models\YBlogInfo.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="YBlogLoader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YBLoader.CoreLib\YBLoader.CoreLib.csproj">
+      <Project>{7324075b-f1d1-4732-87d9-79feca447b1c}</Project>
+      <Name>YBLoader.CoreLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
