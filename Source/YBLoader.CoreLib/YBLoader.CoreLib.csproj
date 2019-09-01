@@ -47,6 +47,8 @@
     <Compile Include="Models\YBlogArticleIdCollection.cs" />
     <Compile Include="Models\YBlogArticleIdInfo.cs" />
     <Compile Include="Models\YBlogArticleMetaInfo.cs" />
+    <Compile Include="Models\YBlogAttachedImageInfo.cs" />
+    <Compile Include="Models\YBlogComment.cs" />
     <Compile Include="Models\YBlogInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="YBlogArticleLoader.cs" />
