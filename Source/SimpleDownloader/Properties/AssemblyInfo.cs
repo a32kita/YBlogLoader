@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // 制御されます。アセンブリに関連付けられている情報を変更するには、
 // これらの属性値を変更します。
 [assembly: AssemblyTitle("SimpleDownloader")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Yahoo! BLOG Article Page Simple Downloader")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Explorers of the Binary World")]
 [assembly: AssemblyProduct("SimpleDownloader")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright © 2019 Explorers of the Binary World / あおと All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
