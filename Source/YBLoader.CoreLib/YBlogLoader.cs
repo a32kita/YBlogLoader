@@ -121,68 +121,42 @@ namespace YBLoader.CoreLib
         public async Task<YBlogArticleMetaInfo> GetArticleMetaInfoAsync(string url)
         {
             var result = new YBlogArticleMetaInfo();
-            result.Url = new Uri(url);
-            result.Id = url.Split('/').Last().Split('.')[0];
+            this._getArticleIdAndUrlToMetaInfo(url, ref result);
 
             using (var httpResponse = await this._httpClient.GetAsync(result.Url))
             using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
                 this._getArticleMetaInfoWithoutURLandIDFromStream(httpStream, ref result);
-            //using (var sr = new StreamReader(httpStream, Encoding.GetEncoding("euc-jp")))
-            //{
-            //    // 件名
-            //    // <span itemprop="headline">2019年07月17日 本日の乗車記録</span>
-            //    var subjectKeyword = "<span itemprop=\"headline\">";
-            //    while (!sr.EndOfStream)
-            //    {
-            //        var line = sr.ReadLine();
-            //        if (!line.Contains(subjectKeyword))
-            //            continue;
-
-            //        line = line.Replace(subjectKeyword, "\n").Split('\n')[1]
-            //            .Replace("</span>", "\n").Split('\n')[0];
-            //        result.Subject = line;
-
-            //        break;
-            //    }
-
-            //    // 投稿日時
-            //    // <span itemprop="datePublished" content="2019-08-21T23:25:00+09:00">2019/8/21(水) 午後 11:25</span>
-            //    var pubKeyword = "<span itemprop=\"datePublished\" content=\"";
-            //    while (!sr.EndOfStream)
-            //    {
-            //        var line = sr.ReadLine();
-            //        if (!line.Contains(pubKeyword))
-            //            continue;
-
-            //        line = line.Replace(pubKeyword, "\n").Split('\n')[1]
-            //            .Replace("\">", "\n").Split('\n')[0];
-            //        result.PublishedAt = DateTime.Parse(line);
-
-            //        break;
-            //    }
-
-            //    // 書庫名
-            //    // <li class="library"><a href="https://blogs.yahoo.co.jp/a32kita/folder/437705.html">乗車記録</a></li>
-            //    var groupKeyword = "<li class=\"library\"><a href=\"";
-            //    while (!sr.EndOfStream)
-            //    {
-            //        var line = sr.ReadLine();
-            //        if (!line.Contains(groupKeyword))
-            //            continue;
-
-            //        line = line.Replace(groupKeyword, "\n").Split('\n')[1]
-            //            .Replace("\">", "\n").Split('\n')[1]
-            //            .Replace("</a>", "\n").Split('\n')[0];
-            //        result.ArchiveGroup = line;
-
-            //        break;
-            //    }
-            //}
-
+            
             return result;
         }
 
         #endregion
+
+        public async Task<YBlogArticleDocument> GetArticleDocumentAsync(YBlogInfo blogInfo, string articleId)
+        {
+            return await this.GetArticleDocumentAsync(UrlUtils.ArticleIdToUrl(blogInfo, articleId));
+        }
+
+        public async Task<YBlogArticleDocument> GetArticleDocumentAsync(string url)
+        {
+            var streams = new Stream[0];
+
+            using (var httpResponse = await this._httpClient.GetAsync(url))
+            using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
+                streams = StreamUtils.DuplicateStream(httpStream, 2).ToArray();
+
+            var metaInfo = new YBlogArticleMetaInfo();
+            this._getArticleIdAndUrlToMetaInfo(url, ref metaInfo);
+            this._getArticleMetaInfoWithoutURLandIDFromStream(streams[0], ref metaInfo);
+
+            var result = new YBlogArticleDocument();
+            result.MetaInfo = metaInfo;
+
+            using (var br = new BinaryReader(streams[1]))
+                result.SourceRawData = br.ReadBytes((int)streams[1].Length);
+
+            return result;
+        }
 
 
         /// <summary>
@@ -226,6 +200,17 @@ namespace YBLoader.CoreLib
 
 
         // 非公開メソッド
+
+        /// <summary>
+        /// URL 文字列から記事 ID と URL を <see cref="YBlogArticleMetaInfo"/> へロードします。
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="result"></param>
+        private void _getArticleIdAndUrlToMetaInfo(string url, ref YBlogArticleMetaInfo result)
+        {
+            result.Url = new Uri(url);
+            result.Id = url.Split('/').Last().Split('.')[0];
+        }
 
         /// <summary>
         /// <see cref="Stream"/> から <see cref="YBlogArticleMetaInfo"/> をロードします。

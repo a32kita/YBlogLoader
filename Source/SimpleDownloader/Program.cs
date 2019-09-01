@@ -15,11 +15,19 @@ namespace SimpleDownloader
     {
         static void Main(string[] args)
         {
+            start:
+
             Console.Write("Enter blog id>");
             var blogId = Console.ReadLine();
 
             var loader = new YBlogLoader();
             var blogInfo = Task.Run(() => loader.GetBlogInfoAsync(blogId)).Result;
+
+            if (String.IsNullOrEmpty(blogInfo.Title) && String.IsNullOrEmpty(blogInfo.Author))
+            {
+                Console.WriteLine("Failured to getting blog information.");
+                goto start;
+            }
 
             Console.WriteLine("Title={0}", blogInfo.Title);
             Console.WriteLine("Author={0}", blogInfo.Author);
@@ -47,13 +55,19 @@ namespace SimpleDownloader
                     {
                         try
                         {
-                            var articleInfo = Task.Run(() => loader.GetArticleMetaInfoAsync(blogInfo, articleIdInfo.Id)).Result;
+                            var articleDocument = Task.Run(() => loader.GetArticleDocumentAsync(blogInfo, articleIdInfo.Id)).Result;
+                            var articleMetaInfo = articleDocument.MetaInfo;
 
-                            var articleSaveDir = Path.Combine(saveDir, articleInfo.ArchiveGroup);
+                            var articleSaveDir = Path.Combine(saveDir, articleMetaInfo.ArchiveGroup);
                             if (!Directory.Exists(articleSaveDir))
                                 Directory.CreateDirectory(articleSaveDir);
 
-                            var articleFilePath = Path.Combine(articleSaveDir, articleInfo.Id + "_" + articleInfo.Subject
+                            var createdAt = String.Format("{0:00}{1:00}{2:00}",
+                                articleMetaInfo.PublishedAt.Year % 100,
+                                articleMetaInfo.PublishedAt.Month,
+                                articleMetaInfo.PublishedAt.Day);
+
+                            var articleFilePath = Path.Combine(articleSaveDir, createdAt + "_" + articleMetaInfo.Id + "_" + articleMetaInfo.Subject
                                 .Replace("*", "＊")
                                 .Replace("?", "？")
                                 .Replace("/", "／")
@@ -64,8 +78,10 @@ namespace SimpleDownloader
                                 .Replace("|", "｜")
                                 + ".html");
 
-                            Task.Run(() => SaveArticle(httpClient, articleInfo, articleFilePath));
-                            Console.WriteLine("Article is saved!!: {0} {1}", articleInfo.Id, articleInfo.Subject);
+                            using (var bw = new BinaryWriter(File.OpenWrite(articleFilePath)))
+                                bw.Write(articleDocument.SourceRawData);
+
+                            Console.WriteLine("Article is saved!!: {0} {1}", articleMetaInfo.Id, articleMetaInfo.Subject);
                         }
                         catch (Exception ex)
                         {
@@ -77,17 +93,6 @@ namespace SimpleDownloader
                 {
                     Console.WriteLine(ex.GetType().Name);
                 }
-            }
-        }
-
-        static async Task SaveArticle(HttpClient httpClient, YBlogArticleMetaInfo metaInfo, string savePath)
-        {
-            using (var httpResponse = await httpClient.GetAsync(metaInfo.Url))
-            using (var br = new BinaryReader(await httpResponse.Content.ReadAsStreamAsync()))
-            {
-                var buffer = br.ReadBytes((int)br.BaseStream.Length);
-                using (var bw = new BinaryWriter(File.OpenWrite(savePath)))
-                    bw.Write(buffer);
             }
         }
     }

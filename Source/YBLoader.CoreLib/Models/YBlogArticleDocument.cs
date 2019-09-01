@@ -14,7 +14,7 @@ namespace YBLoader.CoreLib.Models
             set;
         }
 
-        public string Source
+        public byte[] SourceRawData
         {
             get;
             set;
