@@ -34,12 +34,14 @@ namespace YBLoader.Tests
             }
 
             Console.WriteLine();
-            var articleInfo = Task.Run(() => loader.GetArticleMetaInfoAsync(blogInfo, recentlyArticles.First().Id)).Result;
+            var articleDocument = Task.Run(() => loader.GetArticleDocumentAsync(blogInfo, recentlyArticles.First().Id)).Result;
+            var articleMetaInfo = articleDocument.MetaInfo;
 
-            Console.WriteLine("Id={0}", articleInfo.Id);
-            Console.WriteLine("Subject={0}", articleInfo.Subject);
-            Console.WriteLine("PublishedAt={0}", articleInfo.PublishedAt);
-            Console.WriteLine("ArchiveGroup={0}", articleInfo.ArchiveGroup);
+            Console.WriteLine("Id={0}", articleMetaInfo.Id);
+            Console.WriteLine("Subject={0}", articleMetaInfo.Subject);
+            Console.WriteLine("PublishedAt={0}", articleMetaInfo.PublishedAt);
+            Console.WriteLine("ArchiveGroup={0}", articleMetaInfo.ArchiveGroup);
+            Console.WriteLine("Document Size={0} bytes", articleDocument.SourceRawData.Length);
 
             Console.WriteLine();
             Console.Write("Completed!!");

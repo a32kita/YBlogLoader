@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InternalUtils\StreamUtils.cs" />
     <Compile Include="InternalUtils\UrlUtils.cs" />
     <Compile Include="Models\YBlogArticleDocument.cs" />
     <Compile Include="Models\YBlogArticleIdCollection.cs" />
@@ -48,6 +49,7 @@
     <Compile Include="Models\YBlogArticleMetaInfo.cs" />
     <Compile Include="Models\YBlogInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="YBlogArticleLoader.cs" />
     <Compile Include="YBlogLoader.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

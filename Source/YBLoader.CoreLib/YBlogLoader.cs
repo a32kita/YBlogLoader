@@ -121,12 +121,107 @@ namespace YBLoader.CoreLib
         public async Task<YBlogArticleMetaInfo> GetArticleMetaInfoAsync(string url)
         {
             var result = new YBlogArticleMetaInfo();
-            result.Url = new Uri(url);
-            result.Id = url.Split('/').Last().Split('.')[0];
+            this._getArticleIdAndUrlToMetaInfo(url, ref result);
 
             using (var httpResponse = await this._httpClient.GetAsync(result.Url))
             using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
+                this._getArticleMetaInfoWithoutURLandIDFromStream(httpStream, ref result);
+            
+            return result;
+        }
+
+        #endregion
+
+        public async Task<YBlogArticleDocument> GetArticleDocumentAsync(YBlogInfo blogInfo, string articleId)
+        {
+            return await this.GetArticleDocumentAsync(UrlUtils.ArticleIdToUrl(blogInfo, articleId));
+        }
+
+        public async Task<YBlogArticleDocument> GetArticleDocumentAsync(string url)
+        {
+            var streams = new Stream[0];
+
+            using (var httpResponse = await this._httpClient.GetAsync(url))
+            using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
+                streams = StreamUtils.DuplicateStream(httpStream, 2).ToArray();
+
+            var metaInfo = new YBlogArticleMetaInfo();
+            this._getArticleIdAndUrlToMetaInfo(url, ref metaInfo);
+            this._getArticleMetaInfoWithoutURLandIDFromStream(streams[0], ref metaInfo);
+
+            var result = new YBlogArticleDocument();
+            result.MetaInfo = metaInfo;
+
+            using (var br = new BinaryReader(streams[1]))
+                result.SourceRawData = br.ReadBytes((int)streams[1].Length);
+
+            return result;
+        }
+
+
+        /// <summary>
+        /// 全ての記事一覧のページから記事の ID を取得します。
+        /// </summary>
+        /// <param name="blogInfo"></param>
+        /// <param name="pageNum"></param>
+        /// <returns></returns>
+        public async Task<YBlogArticleIdCollection> GetArticleIdsAsync(YBlogInfo blogInfo, int pageNum)
+        {
+            var result = new YBlogArticleIdCollection();
+            var url = UrlUtils.BlogIdToAllArticlesPageUrl(blogInfo, pageNum);
+
+            using (var httpResponse = await this._httpClient.GetAsync(url))
+            using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
             using (var sr = new StreamReader(httpStream, Encoding.GetEncoding("euc-jp")))
+            {
+                // 記事 ID
+                // <div class="clearFix entryTitle myblog" data-title="2019年07月11日 本日の乗車記録" data-articleId="16558706" >
+                var idKeyword = "<div class=\"clearFix entryTitle";
+                while (!sr.EndOfStream)
+                {
+                    var line = sr.ReadLine();
+                    if (!line.Contains(idKeyword))
+                        continue;
+
+                    var id = line.Replace("data-articleId=\"", "\n").Split('\n')[1]
+                        .Replace("\"", "\n").Split('\n')[0];
+
+                    result.Add(new YBlogArticleIdInfo()
+                    {
+                        Id = line.Replace("data-articleId=\"", "\n").Split('\n')[1].Replace("\"", "\n").Split('\n')[0],
+                        Subject = line.Replace("data-title=\"", "\n").Split('\n')[1].Replace("\" data", "\n").Split('\n')[0],
+                    });
+                }
+            }
+
+            return result;
+        }
+
+
+
+        // 非公開メソッド
+
+        /// <summary>
+        /// URL 文字列から記事 ID と URL を <see cref="YBlogArticleMetaInfo"/> へロードします。
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="result"></param>
+        private void _getArticleIdAndUrlToMetaInfo(string url, ref YBlogArticleMetaInfo result)
+        {
+            result.Url = new Uri(url);
+            result.Id = url.Split('/').Last().Split('.')[0];
+        }
+
+        /// <summary>
+        /// <see cref="Stream"/> から <see cref="YBlogArticleMetaInfo"/> をロードします。
+        /// 注意: URL と記事 ID はロードされません。
+        /// </summary>
+        /// <param name="sourceStream"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private void _getArticleMetaInfoWithoutURLandIDFromStream(Stream sourceStream, ref YBlogArticleMetaInfo result)
+        {
+            using (var sr = new StreamReader(sourceStream, Encoding.GetEncoding("euc-jp")))
             {
                 // 件名
                 // <span itemprop="headline">2019年07月17日 本日の乗車記録</span>
@@ -177,51 +272,6 @@ namespace YBLoader.CoreLib
                     break;
                 }
             }
-
-            return result;
         }
-
-        #endregion
-
-
-        /// <summary>
-        /// 全ての記事一覧のページから記事の ID を取得します。
-        /// </summary>
-        /// <param name="blogInfo"></param>
-        /// <param name="pageNum"></param>
-        /// <returns></returns>
-        public async Task<YBlogArticleIdCollection> GetArticleIdsAsync(YBlogInfo blogInfo, int pageNum)
-        {
-            var result = new YBlogArticleIdCollection();
-            var url = UrlUtils.BlogIdToAllArticlesPageUrl(blogInfo, pageNum);
-
-            using (var httpResponse = await this._httpClient.GetAsync(url))
-            using (var httpStream = await httpResponse.Content.ReadAsStreamAsync())
-            using (var sr = new StreamReader(httpStream, Encoding.GetEncoding("euc-jp")))
-            {
-                // 記事 ID
-                // <div class="clearFix entryTitle myblog" data-title="2019年07月11日 本日の乗車記録" data-articleId="16558706" >
-                var idKeyword = "<div class=\"clearFix entryTitle";
-                while (!sr.EndOfStream)
-                {
-                    var line = sr.ReadLine();
-                    if (!line.Contains(idKeyword))
-                        continue;
-
-                    var id = line.Replace("data-articleId=\"", "\n").Split('\n')[1]
-                        .Replace("\"", "\n").Split('\n')[0];
-
-                    result.Add(new YBlogArticleIdInfo()
-                    {
-                        Id = line.Replace("data-articleId=\"", "\n").Split('\n')[1].Replace("\"", "\n").Split('\n')[0],
-                        Subject = line.Replace("data-title=\"", "\n").Split('\n')[1].Replace("\" data", "\n").Split('\n')[0],
-                    });
-                }
-            }
-
-            return result;
-        }
-
-
     }
 }
